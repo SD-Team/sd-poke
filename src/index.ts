@@ -1,8 +1,8 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { DISCORD_TOKEN } from './config.js';
 import { getDb } from './database/connection.js';
 import { handleSpawn } from './commands/spawn.js';
-import { handleSetupEmoji } from './commands/setup-emoji.js';
+import { ensureEmoji } from './emoji-config.js';
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -11,15 +11,19 @@ const client = new Client({
 client.once('ready', async () => {
   console.log(`✅ Logged in as ${client.user?.tag}`);
 
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      await ensureEmoji(guild);
+    } catch {
+      // skip guilds where bot lacks permissions
+    }
+  }
+
   const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
   const commands = [
     new SlashCommandBuilder()
       .setName('spawn')
       .setDescription('Spawn a wild Pokémon to catch!'),
-    new SlashCommandBuilder()
-      .setName('setup-emoji')
-      .setDescription('Upload ball emoji icons to this server')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuildExpressions),
   ];
 
   try {
@@ -31,11 +35,8 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
-  if (interaction.commandName === 'spawn') {
+  if (interaction.isCommand() && interaction.commandName === 'spawn') {
     await handleSpawn(interaction);
-  } else if (interaction.commandName === 'setup-emoji') {
-    await handleSetupEmoji(interaction);
   }
 });
 
