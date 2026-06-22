@@ -2,21 +2,30 @@ import { CommandInteraction, CacheType, Message, EmbedBuilder, ActionRowBuilder,
 import { getOrCreateUser } from '../database/repositories/user.repo.js';
 import { getBoxPage } from '../database/repositories/pokedex.repo.js';
 import { getEmoji } from '../emoji-config.js';
-import { getPokemonList } from '../services/spawn.service.js';
+import { getPokemonList, getSpriteUrl } from '../services/spawn.service.js';
 import type { Pokemon, BoxEntry, BoxRarity } from '../models/types.js';
 
 const PER_PAGE = 20;
 
-const RARITY_EMOJI_MAP: Record<string, string> = {
-  mega: 'mega',
-  shiny: 'shiny',
-  legendary: 'legendary',
+function getPokemonSprite(dexId: number): string {
+  const p = getPokemonList().find(x => x.id === dexId);
+  return p ? p.sprite : getSpriteUrl(dexId);
+}
+
+const RARITY_EMOJI_FALLBACK: Record<string, string> = {
+  mega: '🟢',
+  shiny: '🌸',
+  legendary: '🟣',
+  super_rare: '🟡',
+  rare: '🔵',
+  uncommon: '🟢',
+  common: '⚪',
 };
 
 function getRarityEmoji(rarity: string): string {
-  const key = RARITY_EMOJI_MAP[rarity];
-  if (key) return getEmoji(key) || '';
-  return '';
+  const custom = getEmoji(rarity);
+  if (custom) return custom;
+  return RARITY_EMOJI_FALLBACK[rarity] || '';
 }
 
 function fmtBoxEntry(entry: BoxEntry): string {
@@ -25,6 +34,7 @@ function fmtBoxEntry(entry: BoxEntry): string {
 }
 
 function formatBoxEmbed(trainerName: string, page: number, totalPages: number, totalPokemon: number, entries: BoxEntry[], sortBy: string): EmbedBuilder {
+  const firstSprite = entries.length > 0 ? getPokemonSprite(entries[0].dex_id) : undefined;
   const left = entries.slice(0, 10);
   const right = entries.slice(10, 20);
 
@@ -45,6 +55,7 @@ function formatBoxEmbed(trainerName: string, page: number, totalPages: number, t
       { name: '\u200b', value: col1, inline: true },
       { name: '\u200b', value: col2, inline: true },
     )
+    .setThumbnail(firstSprite || null)
     .setFooter({ text: `Box page ${page}/${totalPages} • Total mons: ${totalPokemon.toLocaleString()} • Sorted by: ${sortBy}` });
 
   return embed;
