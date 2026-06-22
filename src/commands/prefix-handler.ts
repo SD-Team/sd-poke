@@ -1,11 +1,11 @@
-import { Message } from 'discord.js';
+import { Message, ButtonInteraction } from 'discord.js';
 import { getOrCreateUser } from '../database/repositories/user.repo.js';
 import { getBalls } from '../database/repositories/inventory.repo.js';
 import { getRandomPokemon } from '../services/spawn.service.js';
 import { processCatch } from '../services/catch-processor.js';
 import { buildSpawnEmbed, buildResultEmbed } from '../services/reward.service.js';
 import { setActiveSpawn, getActiveSpawn, removeActiveSpawn } from '../services/spawn-tracker.js';
-import { COOLDOWN_MS } from '../config.js';
+import { COOLDOWN_MS, CATCH_TIMEOUT_MS } from '../config.js';
 import type { BallType, CatchResult } from '../models/types.js';
 
 const cooldowns = new Map<string, number>();
@@ -45,7 +45,26 @@ export async function handleTextSpawn(msg: Message, _args: string[]): Promise<vo
   cooldowns.set(userId, now);
   setActiveSpawn(msg.channelId, { pokemon, userBalls, currentStreak, totalCaught: user.total_caught, message, timestamp: now });
 
-  setTimeout(() => {
+  try {
+    const btnInteraction = await message.awaitMessageComponent({
+      filter: (i) => i.user.id === userId,
+      time: CATCH_TIMEOUT_MS,
+    });
+
+    removeActiveSpawn(msg.channelId);
+
+    const ballType = btnInteraction.customId.replace('catch_', '') as BallType;
+    const { result, embeds: resultEmbeds, noBalls } = processCatch(
+      userId, pokemon, ballType, currentStreak, user.total_caught, user.amulet_coins,
+    );
+
+    if (noBalls) {
+      await btnInteraction.update({ content: `❌ You have no ${ballType}s left!`, embeds: [], components: [] });
+      return;
+    }
+
+    await btnInteraction.update({ embeds: resultEmbeds!, components: [] });
+  } catch {
     const active = getActiveSpawn(msg.channelId);
     if (active && active.timestamp === now) {
       removeActiveSpawn(msg.channelId);
@@ -56,7 +75,7 @@ export async function handleTextSpawn(msg: Message, _args: string[]): Promise<vo
       } as CatchResult);
       message.edit({ embeds: timeoutEmbed.embeds, components: [] }).catch(() => {});
     }
-  }, 30000);
+  }
 }
 
 export async function handleTextCatch(msg: Message, args: string[]): Promise<void> {
@@ -68,7 +87,6 @@ export async function handleTextCatch(msg: Message, args: string[]): Promise<voi
 
   const active = getActiveSpawn(msg.channelId);
   if (!active) return;
-  if (active.message.id !== msg.reference?.messageId && msg.channelId !== active.message.channelId) return;
 
   const userId = msg.author.id;
 

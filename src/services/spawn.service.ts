@@ -8,13 +8,18 @@ let pokemonList: Pokemon[] | null = null;
 function loadPokemon(): Pokemon[] {
   if (!pokemonList) {
     const filePath = path.resolve('./data/pokedex.json');
-    pokemonList = JSON.parse(readFileSync(filePath, 'utf-8')) as Pokemon[];
+    const raw = JSON.parse(readFileSync(filePath, 'utf-8')) as Pokemon[];
+    pokemonList = raw.map(p => ({ ...p, sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${p.id}.gif` }));
   }
   return pokemonList!;
 }
 
 export function getPokemonList(): Pokemon[] {
   return loadPokemon();
+}
+
+export function getSpriteUrl(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
 }
 
 export function getRandomPokemon(): Pokemon {

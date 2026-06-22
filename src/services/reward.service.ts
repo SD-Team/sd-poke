@@ -42,6 +42,11 @@ export function buildSpawnEmbed(
   const streakKey = pokemon.rarity.charAt(0).toUpperCase() + pokemon.rarity.slice(1).replace('_', ' ');
   const rarityLabel = streakKey + encounterRate(pokemon.rarity);
 
+  const ballEntries = BALL_ORDER.filter(k => (userBalls[k] || 0) > 0);
+  const mid = Math.ceil(ballEntries.length / 2);
+  const ballsCol1 = ballEntries.slice(0, mid).map(k => `${getBallEmoji(k) || BALLS[k]?.emoji || ''} ${userBalls[k]}`).join('  ');
+  const ballsCol2 = ballEntries.slice(mid).map(k => `${getBallEmoji(k) || BALLS[k]?.emoji || ''} ${userBalls[k]}`).join('  ');
+
   const embed = new EmbedBuilder()
     .setColor(color)
     .setAuthor({ name: 'A wild Pokémon appeared!' })
@@ -49,9 +54,9 @@ export function buildSpawnEmbed(
     .addFields(
       { name: 'Rarity', value: rarityLabel, inline: true },
       { name: `${streakKey} streak`, value: `${currentStreak}`, inline: true },
+      { name: '═════ Balls left ═════', value: `${ballsCol1}${ballsCol2 ? '\n' + ballsCol2 : ''}`, inline: false },
     )
-    .setImage(pokemon.sprite)
-    .setFooter({ text: `═════ Balls left: ${totalBalls} ═════` });
+    .setImage(pokemon.sprite);
 
   const ballCount = BALL_ORDER.length;
   const rows: ActionRowBuilder<ButtonBuilder>[] = [];
