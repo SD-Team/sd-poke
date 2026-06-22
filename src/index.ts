@@ -51,7 +51,6 @@ client.on('messageCreate', async (msg) => {
 
   try {
     if (cmd === 'p' || cmd === 'pokemon') {
-      await msg.channel.sendTyping();
       await handleTextSpawn(msg, args);
     } else if (BALL_ALIASES[cmd]) {
       await handleTextCatch(msg, [cmd]);

@@ -34,8 +34,7 @@ export function buildSpawnEmbed(
     .setColor(color)
     .setAuthor({ name: 'Wild Pokémon appeared!' })
     .setDescription(`A wild **${pokemon.displayName}** appeared!${catchStatus}`)
-    .addFields({ name: 'Poké Balls', value: BALL_ORDER.map(k => `${getBallEmoji(k) || BALLS[k].emoji} ${userBalls[k] || 0}`).join(' · '), inline: false })
-    .setImage(pokemon.sprite)
+    .setThumbnail(pokemon.sprite)
     .setFooter({ text: `${RARITY_NAMES[pokemon.rarity] || pokemon.rarity}\nBalls left: ${totalBalls}` });
 
   const ballCount = BALL_ORDER.length;
@@ -77,7 +76,7 @@ export function buildResultEmbed(result: CatchResult): { embeds: EmbedBuilder[];
         { name: 'Streak', value: `🔥 ${result.newStreak}`, inline: true },
         { name: 'Total Caught', value: `📦 ${result.totalCaught}`, inline: true },
       )
-      .setImage(pokemon.sprite)
+      .setThumbnail(pokemon.sprite)
       .setTimestamp();
   } else {
     embed = new EmbedBuilder()
@@ -89,7 +88,7 @@ export function buildResultEmbed(result: CatchResult): { embeds: EmbedBuilder[];
         { name: 'Roll', value: `${result.roll.toFixed(1)}% / ${result.catchRate.toFixed(0)}%`, inline: true },
         { name: 'Better luck next time!', value: 'Tip: Use a stronger ball for better odds.', inline: false },
       )
-      .setImage(pokemon.sprite)
+      .setThumbnail(pokemon.sprite)
       .setTimestamp();
   }
 
