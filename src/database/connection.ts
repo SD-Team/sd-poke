@@ -1,23 +1,23 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 
 const DB_PATH = path.resolve('./data/pokemeow.db');
 
-let db: Database.Database;
+let db: DatabaseSync;
 
-export function getDb(): Database.Database {
+export function getDb(): DatabaseSync {
   if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
+    db = new DatabaseSync(DB_PATH);
+    db.exec('PRAGMA journal_mode = WAL');
+    db.exec('PRAGMA foreign_keys = ON');
     initTables();
   }
   return db;
 }
 
-export function getMemoryDb(): Database.Database {
-  const memDb = new Database(':memory:');
-  memDb.pragma('foreign_keys = ON');
+export function getMemoryDb(): DatabaseSync {
+  const memDb = new DatabaseSync(':memory:');
+  memDb.exec('PRAGMA foreign_keys = ON');
   initTablesForDb(memDb);
   return memDb;
 }
@@ -26,7 +26,7 @@ function initTables() {
   initTablesForDb(db);
 }
 
-function initTablesForDb(database: Database.Database) {
+function initTablesForDb(database: DatabaseSync) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
