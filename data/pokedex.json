@@ -1,0 +1,22 @@
+[
+  {"id": 1, "name": "bulbasaur", "displayName": "Bulbasaur", "types": ["grass","poison"], "rarity": "common", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png"},
+  {"id": 4, "name": "charmander", "displayName": "Charmander", "types": ["fire"], "rarity": "common", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png"},
+  {"id": 7, "name": "squirtle", "displayName": "Squirtle", "types": ["water"], "rarity": "common", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png"},
+  {"id": 25, "name": "pikachu", "displayName": "Pikachu", "types": ["electric"], "rarity": "common", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"},
+  {"id": 133, "name": "eevee", "displayName": "Eevee", "types": ["normal"], "rarity": "uncommon", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png"},
+  {"id": 143, "name": "snorlax", "displayName": "Snorlax", "types": ["normal"], "rarity": "rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png"},
+  {"id": 149, "name": "dragonite", "displayName": "Dragonite", "types": ["dragon","flying"], "rarity": "super_rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/149.png"},
+  {"id": 150, "name": "mewtwo", "displayName": "Mewtwo", "types": ["psychic"], "rarity": "legendary", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png"},
+  {"id": 151, "name": "mew", "displayName": "Mew", "types": ["psychic"], "rarity": "legendary", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/151.png"},
+  {"id": 6, "name": "charizard", "displayName": "Charizard", "types": ["fire","flying"], "rarity": "rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png"},
+  {"id": 9, "name": "blastoise", "displayName": "Blastoise", "types": ["water"], "rarity": "rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png"},
+  {"id": 3, "name": "venusaur", "displayName": "Venusaur", "types": ["grass","poison"], "rarity": "rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png"},
+  {"id": 38, "name": "ninetales", "displayName": "Ninetales", "types": ["fire"], "rarity": "uncommon", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/38.png"},
+  {"id": 65, "name": "alakazam", "displayName": "Alakazam", "types": ["psychic"], "rarity": "super_rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/65.png"},
+  {"id": 94, "name": "gengar", "displayName": "Gengar", "types": ["ghost","poison"], "rarity": "super_rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png"},
+  {"id": 130, "name": "gyarados", "displayName": "Gyarados", "types": ["water","flying"], "rarity": "super_rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/130.png"},
+  {"id": 131, "name": "lapras", "displayName": "Lapras", "types": ["water","ice"], "rarity": "rare", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/131.png"},
+  {"id": 144, "name": "articuno", "displayName": "Articuno", "types": ["ice","flying"], "rarity": "legendary", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/144.png"},
+  {"id": 145, "name": "zapdos", "displayName": "Zapdos", "types": ["electric","flying"], "rarity": "legendary", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/145.png"},
+  {"id": 146, "name": "moltres", "displayName": "Moltres", "types": ["fire","flying"], "rarity": "legendary", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/146.png"}
+]
