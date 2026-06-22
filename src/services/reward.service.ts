@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import type { Pokemon, BallType, CatchResult } from '../models/types.js';
-import { BALLS, BALL_ORDER, BASE_CATCH_RATES } from '../config.js';
+import { BALLS, BALL_ORDER, ENCOUNTER_WEIGHTS } from '../config.js';
 import { getBallEmoji } from '../emoji-config.js';
 
 const RARITY_COLORS: Record<string, number> = {
@@ -11,31 +11,47 @@ const RARITY_COLORS: Record<string, number> = {
   legendary: 0xA007F8,
 };
 
-const RARITY_NAMES: Record<string, string> = {
-  common: 'Common',
-  uncommon: 'Uncommon',
-  rare: 'Rare',
-  super_rare: 'Super Rare',
-  legendary: 'Legendary',
-};
+const TOTAL_WEIGHT = Object.values(ENCOUNTER_WEIGHTS).reduce((a, b) => a + b, 0);
+
+function encounterRate(rarity: string): string {
+  const w = ENCOUNTER_WEIGHTS[rarity as keyof typeof ENCOUNTER_WEIGHTS];
+  if (!w) return '';
+  return ` (${(w / TOTAL_WEIGHT * 100).toFixed(1)}% encounter rate)`;
+}
+
+function ballsField(userBalls: Record<string, number>): string {
+  const pairs = Object.entries(userBalls).filter(([, qty]) => qty > 0).map(([k, qty]) => {
+    const e = getBallEmoji(k) || BALLS[k]?.emoji || '';
+    return `${e} ${k.charAt(0).toUpperCase() + k.slice(1).replace('ball', 'balls')}: ${qty}`;
+  });
+  if (pairs.length === 0) return 'No balls left!';
+  const mid = Math.ceil(pairs.length / 2);
+  return `\`\`\`\n${pairs.slice(0, mid).join('\n')}\n${pairs.slice(mid).join('\n')}\n\`\`\``.trim();
+}
 
 export function buildSpawnEmbed(
   pokemon: Pokemon,
   userBalls: Record<string, number>,
-  _currentStreak: number,
+  currentStreak: number,
   _totalCaught: number,
   hasCaught = false,
 ): { embeds: EmbedBuilder[]; components: ActionRowBuilder<ButtonBuilder>[] } {
   const color = RARITY_COLORS[pokemon.rarity] || 0x0855FB;
   const totalBalls = BALL_ORDER.map(k => userBalls[k] || 0).reduce((a, b) => a + b);
-  const catchStatus = hasCaught ? '' : ' (new!)';
+  const caughtEmoji = hasCaught ? '✅' : '⬜';
+  const streakKey = pokemon.rarity.charAt(0).toUpperCase() + pokemon.rarity.slice(1).replace('_', ' ');
+  const rarityLabel = streakKey + encounterRate(pokemon.rarity);
 
   const embed = new EmbedBuilder()
     .setColor(color)
-    .setAuthor({ name: 'Wild Pokémon appeared!' })
-    .setDescription(`A wild **${pokemon.displayName}** appeared!${catchStatus}`)
-    .setThumbnail(pokemon.sprite)
-    .setFooter({ text: `${RARITY_NAMES[pokemon.rarity] || pokemon.rarity}\nBalls left: ${totalBalls}` });
+    .setAuthor({ name: 'A wild Pokémon appeared!' })
+    .setDescription(`${pokemon.displayName} #${String(pokemon.id).padStart(4, '0')} ${caughtEmoji}`)
+    .addFields(
+      { name: 'Rarity', value: rarityLabel, inline: true },
+      { name: `${streakKey} streak`, value: `${currentStreak}`, inline: true },
+    )
+    .setImage(pokemon.sprite)
+    .setFooter({ text: `═════ Balls left: ${totalBalls} ═════` });
 
   const ballCount = BALL_ORDER.length;
   const rows: ActionRowBuilder<ButtonBuilder>[] = [];
@@ -76,7 +92,7 @@ export function buildResultEmbed(result: CatchResult): { embeds: EmbedBuilder[];
         { name: 'Streak', value: `🔥 ${result.newStreak}`, inline: true },
         { name: 'Total Caught', value: `📦 ${result.totalCaught}`, inline: true },
       )
-      .setThumbnail(pokemon.sprite)
+      .setImage(pokemon.sprite)
       .setTimestamp();
   } else {
     embed = new EmbedBuilder()
@@ -88,7 +104,7 @@ export function buildResultEmbed(result: CatchResult): { embeds: EmbedBuilder[];
         { name: 'Roll', value: `${result.roll.toFixed(1)}% / ${result.catchRate.toFixed(0)}%`, inline: true },
         { name: 'Better luck next time!', value: 'Tip: Use a stronger ball for better odds.', inline: false },
       )
-      .setThumbnail(pokemon.sprite)
+      .setImage(pokemon.sprite)
       .setTimestamp();
   }
 
