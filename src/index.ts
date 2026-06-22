@@ -6,7 +6,7 @@ import { handleTextSpawn, handleTextCatch, BALL_ALIASES } from './commands/prefi
 import { ensureEmoji } from './emoji-config.js';
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
 client.once('ready', async () => {
@@ -49,10 +49,16 @@ client.on('messageCreate', async (msg) => {
 
   const [cmd, ...args] = msg.content.slice(prefix.length).trim().split(/\s+/);
 
-  if (cmd === 'p' || cmd === 'pokemon') {
-    await handleTextSpawn(msg, args);
-  } else if (BALL_ALIASES[cmd]) {
-    await handleTextCatch(msg, [cmd]);
+  try {
+    if (cmd === 'p' || cmd === 'pokemon') {
+      await msg.channel.sendTyping();
+      await handleTextSpawn(msg, args);
+    } else if (BALL_ALIASES[cmd]) {
+      await handleTextCatch(msg, [cmd]);
+    }
+  } catch (err) {
+    console.error('Prefix command error:', err);
+    msg.reply('An error occurred while processing your command.').catch(() => {});
   }
 });
 
