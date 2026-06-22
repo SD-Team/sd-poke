@@ -35,28 +35,34 @@ export function buildSpawnEmbed(
   currentStreak: number,
   _totalCaught: number,
   hasCaught = false,
+  trainerName = 'Trainer',
 ): { embeds: EmbedBuilder[]; components: ActionRowBuilder<ButtonBuilder>[] } {
   const color = RARITY_COLORS[pokemon.rarity] || 0x0855FB;
-  const totalBalls = BALL_ORDER.map(k => userBalls[k] || 0).reduce((a, b) => a + b);
   const caughtEmoji = hasCaught ? '✅' : '⬜';
   const streakKey = pokemon.rarity.charAt(0).toUpperCase() + pokemon.rarity.slice(1).replace('_', ' ');
   const rarityLabel = streakKey + encounterRate(pokemon.rarity);
 
   const ballEntries = BALL_ORDER.filter(k => (userBalls[k] || 0) > 0);
   const mid = Math.ceil(ballEntries.length / 2);
-  const ballsCol1 = ballEntries.slice(0, mid).map(k => `${getBallEmoji(k) || BALLS[k]?.emoji || ''} ${userBalls[k]}`).join('  ');
-  const ballsCol2 = ballEntries.slice(mid).map(k => `${getBallEmoji(k) || BALLS[k]?.emoji || ''} ${userBalls[k]}`).join('  ');
+  const fmtBall = (k: string, qty: number) => `${getBallEmoji(k) || BALLS[k]?.emoji || ''} ${BALLS[k]?.label || k}s: ${qty}`;
+  const footerBalls = [
+    ballEntries.slice(0, mid).map(k => fmtBall(k, userBalls[k]!)).join('  •  '),
+    ...(ballEntries.slice(mid).length > 0 ? [ballEntries.slice(mid).map(k => fmtBall(k, userBalls[k]!)).join('  •  ')] : []),
+  ];
+  const footerText = [
+    rarityLabel,
+    `${streakKey} streak: ${currentStreak}`,
+    '',
+    '══════ Balls left ══════',
+    ...footerBalls,
+  ].join('\n');
 
   const embed = new EmbedBuilder()
     .setColor(color)
     .setAuthor({ name: 'A wild Pokémon appeared!' })
-    .setDescription(`${pokemon.displayName} #${String(pokemon.id).padStart(4, '0')} ${caughtEmoji}`)
-    .addFields(
-      { name: 'Rarity', value: rarityLabel, inline: true },
-      { name: `${streakKey} streak`, value: `${currentStreak}`, inline: true },
-      { name: '═════ Balls left ═════', value: `${ballsCol1}${ballsCol2 ? '\n' + ballsCol2 : ''}`, inline: false },
-    )
-    .setImage(pokemon.sprite);
+    .setDescription(`${trainerName} found a wild #${String(pokemon.id).padStart(4, '0')} ${caughtEmoji} ${pokemon.displayName}!`)
+    .setImage(pokemon.sprite)
+    .setFooter({ text: footerText });
 
   const ballCount = BALL_ORDER.length;
   const rows: ActionRowBuilder<ButtonBuilder>[] = [];

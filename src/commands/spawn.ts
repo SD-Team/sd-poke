@@ -36,7 +36,7 @@ export async function handleSpawn(interaction: CommandInteraction<CacheType>): P
   const streakKey = `streak_${pokemon.rarity}` as keyof typeof user;
   const currentStreak = (user[streakKey] as number) || 0;
 
-  const { embeds, components } = buildSpawnEmbed(pokemon, userBalls, currentStreak, user.total_caught);
+  const { embeds, components } = buildSpawnEmbed(pokemon, userBalls, currentStreak, user.total_caught, false, interaction.user.username);
   const message = await interaction.editReply({ embeds, components });
 
   cooldowns.set(userId, now);

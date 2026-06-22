@@ -39,7 +39,7 @@ export async function handleTextSpawn(msg: Message, _args: string[]): Promise<vo
 
   if (!msg.channel.isTextBased() || msg.channel.isDMBased()) return;
 
-  const { embeds, components } = buildSpawnEmbed(pokemon, userBalls, currentStreak, user.total_caught);
+  const { embeds, components } = buildSpawnEmbed(pokemon, userBalls, currentStreak, user.total_caught, false, msg.author.username);
   const message = await msg.channel.send({ embeds, components });
 
   cooldowns.set(userId, now);
