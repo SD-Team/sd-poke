@@ -37,8 +37,10 @@ describe('RewardService', () => {
       success: true, pokemon: testPokemon, ballUsed: 'pokeball',
       catchRate: 80, roll: 45, coinsEarned: 150, newStreak: 3, totalCaught: 10,
     };
-    const { embeds } = buildResultEmbed(result);
-    expect(embeds[0].data.description).toContain('Great work');
+    const { embeds } = buildResultEmbed(result, 'TestUser');
+    expect(embeds[0].data.author!.name).toContain('Congratulations');
+    expect(embeds[0].data.description).toContain('caught');
+    expect(embeds[0].data.footer!.text).toContain('PokeCoins');
   });
 
   it('should build failure result embed', () => {
@@ -46,7 +48,8 @@ describe('RewardService', () => {
       success: false, pokemon: testPokemon, ballUsed: 'ultraball',
       catchRate: 100, roll: 95, coinsEarned: 0, newStreak: 0, totalCaught: 10,
     };
-    const { embeds } = buildResultEmbed(result);
+    const { embeds } = buildResultEmbed(result, 'TestUser');
     expect(embeds[0].data.description).toContain('broke out');
+    expect(embeds[0].data.footer!.text).toContain('Ball used');
   });
 });

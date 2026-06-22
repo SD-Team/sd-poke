@@ -1,6 +1,7 @@
 import type { UserRow } from '../../models/types.js';
 import { getDb } from '../connection.js';
-import { STARTER_INVENTORY } from '../../config.js';
+import { STARTER_INVENTORY, ITEM_NAMES } from '../../config.js';
+import { seedItems } from './items.repo.js';
 
 export function getUser(userId: string): UserRow | undefined {
   const stmt = getDb().prepare('SELECT * FROM users WHERE id = ?');
@@ -15,6 +16,7 @@ export function getOrCreateUser(userId: string): UserRow {
     for (const [ball, qty] of Object.entries(STARTER_INVENTORY)) {
       insertBall.run(userId, ball, qty);
     }
+    seedItems(userId);
     user = getUser(userId)!;
   }
   return user;

@@ -44,7 +44,7 @@ function initTablesForDb(database: DatabaseSync) {
     CREATE TABLE IF NOT EXISTS inventory (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT NOT NULL,
-      ball_type TEXT NOT NULL CHECK(ball_type IN ('pokeball','greatball','ultraball','premierball','masterball')),
+      ball_type TEXT NOT NULL,
       quantity INTEGER DEFAULT 0,
       UNIQUE(user_id, ball_type),
       FOREIGN KEY (user_id) REFERENCES users(id)
@@ -55,11 +55,31 @@ function initTablesForDb(database: DatabaseSync) {
       user_id TEXT NOT NULL,
       pokemon_id INTEGER NOT NULL,
       shiny INTEGER DEFAULT 0,
+      quantity INTEGER DEFAULT 1,
       caught_at TEXT DEFAULT (datetime('now')),
       UNIQUE(user_id, pokemon_id, shiny),
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      item_name TEXT NOT NULL,
+      quantity INTEGER DEFAULT 0,
+      metadata TEXT DEFAULT '{}',
+      UNIQUE(user_id, item_name),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
   `);
+
+  addPokedexQuantityColumn(database);
+}
+
+function addPokedexQuantityColumn(database: DatabaseSync) {
+  const colInfo = database.prepare("PRAGMA table_info('pokedex')").all() as { name: string }[];
+  if (!colInfo.find(c => c.name === 'quantity')) {
+    database.exec('ALTER TABLE pokedex ADD COLUMN quantity INTEGER DEFAULT 1');
+  }
 }
 
 export function closeDb() {

@@ -1,4 +1,4 @@
-import { Message, ButtonInteraction } from 'discord.js';
+import { Message } from 'discord.js';
 import { getOrCreateUser } from '../database/repositories/user.repo.js';
 import { getBalls } from '../database/repositories/inventory.repo.js';
 import { getRandomPokemon } from '../services/spawn.service.js';
@@ -55,7 +55,7 @@ export async function handleTextSpawn(msg: Message, _args: string[]): Promise<vo
 
     const ballType = btnInteraction.customId.replace('catch_', '') as BallType;
     const { result, embeds: resultEmbeds, noBalls } = processCatch(
-      userId, pokemon, ballType, currentStreak, user.total_caught, user.amulet_coins,
+      userId, pokemon, ballType, currentStreak, user.total_caught, user.amulet_coins, msg.author.username,
     );
 
     if (noBalls) {
@@ -72,7 +72,7 @@ export async function handleTextSpawn(msg: Message, _args: string[]): Promise<vo
         success: false, pokemon, ballUsed: 'pokeball',
         catchRate: 0, roll: 0, coinsEarned: 0,
         newStreak: currentStreak, totalCaught: user.total_caught,
-      } as CatchResult);
+      } as CatchResult, msg.author.username, userBalls);
       message.edit({ embeds: timeoutEmbed.embeds, components: [] }).catch(() => {});
     }
   }
@@ -94,7 +94,7 @@ export async function handleTextCatch(msg: Message, args: string[]): Promise<voi
 
   const user = getOrCreateUser(userId);
   const { result, embeds, noBalls } = processCatch(
-    userId, active.pokemon, ballType, active.currentStreak, active.totalCaught, user.amulet_coins,
+    userId, active.pokemon, ballType, active.currentStreak, active.totalCaught, user.amulet_coins, msg.author.username,
   );
 
   if (noBalls) {

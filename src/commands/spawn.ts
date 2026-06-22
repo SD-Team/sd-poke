@@ -56,7 +56,7 @@ export async function handleSpawn(interaction: CommandInteraction<CacheType>): P
     const ballType = btnInteraction.customId.replace('catch_', '') as BallType;
 
     const { result, embeds: resultEmbeds, noBalls } = processCatch(
-      userId, pokemon, ballType, currentStreak, user.total_caught, user.amulet_coins,
+      userId, pokemon, ballType, currentStreak, user.total_caught, user.amulet_coins, interaction.user.username,
     );
 
     if (noBalls) {
@@ -71,7 +71,7 @@ export async function handleSpawn(interaction: CommandInteraction<CacheType>): P
       success: false, pokemon, ballUsed: 'pokeball',
       catchRate: 0, roll: 0, coinsEarned: 0,
       newStreak: currentStreak, totalCaught: user.total_caught,
-    } as CatchResult);
+    } as CatchResult, interaction.user.username, userBalls);
     await interaction.editReply({ embeds: timeoutEmbed.embeds, components: [] });
   }
 }

@@ -3,6 +3,8 @@ import { DISCORD_TOKEN } from './config.js';
 import { getDb } from './database/connection.js';
 import { handleSpawn } from './commands/spawn.js';
 import { handleTextSpawn, handleTextCatch, BALL_ALIASES } from './commands/prefix-handler.js';
+import { handleBag, handleTextBag } from './commands/bag.js';
+import { handleBox, handleTextBox } from './commands/box.js';
 import { ensureEmoji } from './emoji-config.js';
 
 const client = new Client({
@@ -25,6 +27,12 @@ client.once('ready', async () => {
     new SlashCommandBuilder()
       .setName('spawn')
       .setDescription('Spawn a wild Pokémon to catch!'),
+    new SlashCommandBuilder()
+      .setName('bag')
+      .setDescription('View your item inventory'),
+    new SlashCommandBuilder()
+      .setName('box')
+      .setDescription('View your Pokémon box'),
   ];
 
   try {
@@ -36,8 +44,18 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isCommand() && interaction.commandName === 'spawn') {
-    await handleSpawn(interaction);
+  try {
+    if (interaction.isCommand()) {
+      if (interaction.commandName === 'spawn') {
+        await handleSpawn(interaction);
+      } else if (interaction.commandName === 'bag') {
+        await handleBag(interaction);
+      } else if (interaction.commandName === 'box') {
+        await handleBox(interaction);
+      }
+    }
+  } catch (err) {
+    console.error('Interaction error:', err);
   }
 });
 
@@ -54,6 +72,10 @@ client.on('messageCreate', async (msg) => {
       await handleTextSpawn(msg, args);
     } else if (BALL_ALIASES[cmd]) {
       await handleTextCatch(msg, [cmd]);
+    } else if (cmd === 'bag') {
+      await handleTextBag(msg, args);
+    } else if (cmd === 'box') {
+      await handleTextBox(msg, args);
     }
   } catch (err) {
     console.error('Prefix command error:', err);

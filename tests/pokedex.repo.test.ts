@@ -19,6 +19,7 @@ describe('PokedexRepository', () => {
       user_id TEXT NOT NULL,
       pokemon_id INTEGER NOT NULL,
       shiny INTEGER DEFAULT 0,
+      quantity INTEGER DEFAULT 1,
       caught_at TEXT DEFAULT (datetime('now')),
       UNIQUE(user_id, pokemon_id, shiny),
       FOREIGN KEY (user_id) REFERENCES users(id)
@@ -27,10 +28,18 @@ describe('PokedexRepository', () => {
   });
 
   it('should add entry for caught pokemon', () => {
-    db.prepare("INSERT INTO pokedex (user_id, pokemon_id, shiny) VALUES (?, ?, ?) ON CONFLICT(user_id, pokemon_id, shiny) DO UPDATE SET caught_at = datetime('now')").run('user1', 1, 0);
+    db.prepare("INSERT INTO pokedex (user_id, pokemon_id, shiny, quantity) VALUES (?, ?, ?, 1) ON CONFLICT(user_id, pokemon_id, shiny) DO UPDATE SET quantity = quantity + 1, caught_at = datetime('now')").run('user1', 1, 0);
     const row = db.prepare('SELECT * FROM pokedex WHERE user_id = ? AND pokemon_id = ?').get('user1', 1) as Record<string, unknown>;
     expect(row).toBeDefined();
     expect(row.shiny).toBe(0);
+    expect(row.quantity).toBe(1);
+  });
+
+  it('should increment quantity on duplicate catch', () => {
+    db.prepare("INSERT INTO pokedex (user_id, pokemon_id, shiny, quantity) VALUES (?, ?, ?, 1) ON CONFLICT(user_id, pokemon_id, shiny) DO UPDATE SET quantity = quantity + 1, caught_at = datetime('now')").run('user1', 1, 0);
+    db.prepare("INSERT INTO pokedex (user_id, pokemon_id, shiny, quantity) VALUES (?, ?, ?, 1) ON CONFLICT(user_id, pokemon_id, shiny) DO UPDATE SET quantity = quantity + 1, caught_at = datetime('now')").run('user1', 1, 0);
+    const row = db.prepare('SELECT quantity FROM pokedex WHERE user_id = ? AND pokemon_id = ?').get('user1', 1) as { quantity: number };
+    expect(row.quantity).toBe(2);
   });
 
   it('should detect previously caught pokemon', () => {

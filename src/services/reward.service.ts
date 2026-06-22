@@ -19,16 +19,6 @@ function encounterRate(rarity: string): string {
   return ` (${(w / TOTAL_WEIGHT * 100).toFixed(1)}% encounter rate)`;
 }
 
-function ballsField(userBalls: Record<string, number>): string {
-  const pairs = Object.entries(userBalls).filter(([, qty]) => qty > 0).map(([k, qty]) => {
-    const e = getBallEmoji(k) || BALLS[k]?.emoji || '';
-    return `${e} ${k.charAt(0).toUpperCase() + k.slice(1).replace('ball', 'balls')}: ${qty}`;
-  });
-  if (pairs.length === 0) return 'No balls left!';
-  const mid = Math.ceil(pairs.length / 2);
-  return `\`\`\`\n${pairs.slice(0, mid).join('\n')}\n${pairs.slice(mid).join('\n')}\n\`\`\``.trim();
-}
-
 export function buildSpawnEmbed(
   pokemon: Pokemon,
   userBalls: Record<string, number>,
@@ -44,7 +34,10 @@ export function buildSpawnEmbed(
 
   const ballEntries = BALL_ORDER.filter(k => (userBalls[k] || 0) > 0);
   const mid = Math.ceil(ballEntries.length / 2);
-  const fmtBall = (k: string, qty: number) => `${getBallEmoji(k) || BALLS[k]?.emoji || ''} ${BALLS[k]?.label || k}s: ${qty}`;
+  const fmtBall = (k: string, qty: number) => {
+    const label = BALLS[k]?.label || k;
+    return `${label.endsWith('s') ? label : label + 's'}: ${qty}`;
+  };
   const footerBalls = [
     ballEntries.slice(0, mid).map(k => fmtBall(k, userBalls[k]!)).join('  •  '),
     ...(ballEntries.slice(mid).length > 0 ? [ballEntries.slice(mid).map(k => fmtBall(k, userBalls[k]!)).join('  •  ')] : []),
@@ -85,38 +78,63 @@ export function buildSpawnEmbed(
   return { embeds: [embed], components: rows };
 }
 
-export function buildResultEmbed(result: CatchResult): { embeds: EmbedBuilder[]; components: ActionRowBuilder<ButtonBuilder>[] } {
+export function buildResultEmbed(
+  result: CatchResult,
+  trainerName = 'Trainer',
+  userBalls: Record<string, number> = {},
+): { embeds: EmbedBuilder[]; components: ActionRowBuilder<ButtonBuilder>[] } {
   const pokemon = result.pokemon;
-  const ballEmoji = getBallEmoji(result.ballUsed) || BALLS[result.ballUsed]?.emoji || '';
+  const ballLabel = BALLS[result.ballUsed]?.label || result.ballUsed;
+  const streakKey = pokemon.rarity.charAt(0).toUpperCase() + pokemon.rarity.slice(1).replace('_', ' ');
+  const encounterRateStr = encounterRate(pokemon.rarity);
+
+  const ballEntries = BALL_ORDER.filter(k => (userBalls[k] || 0) > 0);
+  const mid = Math.ceil(ballEntries.length / 2);
+  const fmtBall = (k: string, qty: number) => {
+    const label = BALLS[k]?.label || k;
+    return `${label.endsWith('s') ? label : label + 's'}: ${qty}`;
+  };
+  const footerBalls = ballEntries.length > 0 ? [
+    '',
+    '══════ Balls left ══════',
+    ...(mid > 0 ? [ballEntries.slice(0, mid).map(k => fmtBall(k, userBalls[k]!)).join('  •  ')] : []),
+    ...(ballEntries.slice(mid).length > 0 ? [ballEntries.slice(mid).map(k => fmtBall(k, userBalls[k]!)).join('  •  ')] : []),
+  ] : [];
 
   let embed: EmbedBuilder;
 
   if (result.success) {
+    const footerText = [
+      `Rarity: ${streakKey}${encounterRateStr}`,
+      `${streakKey} streak: ${result.newStreak}`,
+      '',
+      `Pokemon roll: ${result.roll.toFixed(0)}%`,
+      `Your catch rate: ${result.catchRate.toFixed(0)}%`,
+      ...footerBalls,
+      '',
+      `You earned ${result.coinsEarned} PokeCoins!`,
+    ].join('\n');
+
     embed = new EmbedBuilder()
       .setColor(0x2ECC71)
-      .setAuthor({ name: 'CAUGHT!' })
-      .setDescription(`Great work! You caught a **${pokemon.displayName}**!`)
-      .addFields(
-        { name: 'Ball', value: `${ballEmoji} ${BALLS[result.ballUsed].label}`, inline: true },
-        { name: 'Roll', value: `${result.roll.toFixed(1)}% / ${result.catchRate.toFixed(0)}%`, inline: true },
-        { name: 'Coins', value: `🪙 +${result.coinsEarned}`, inline: true },
-        { name: 'Streak', value: `🔥 ${result.newStreak}`, inline: true },
-        { name: 'Total Caught', value: `📦 ${result.totalCaught}`, inline: true },
-      )
+      .setAuthor({ name: `Congratulations, ${trainerName}!` })
+      .setDescription(`✅ You caught a **${pokemon.displayName}** with a **${ballLabel}**!`)
       .setImage(pokemon.sprite)
-      .setTimestamp();
+      .setFooter({ text: footerText });
   } else {
+    const footerText = [
+      `Ball used: ${ballLabel}`,
+      `Pokemon roll: ${result.roll.toFixed(0)}%`,
+      `Your catch rate: ${result.catchRate.toFixed(0)}%`,
+      ...footerBalls,
+    ].join('\n');
+
     embed = new EmbedBuilder()
       .setColor(0xE74C3C)
       .setAuthor({ name: 'FLED...' })
       .setDescription(`The **${pokemon.displayName}** broke out!`)
-      .addFields(
-        { name: 'Ball', value: `${ballEmoji} ${BALLS[result.ballUsed].label}`, inline: true },
-        { name: 'Roll', value: `${result.roll.toFixed(1)}% / ${result.catchRate.toFixed(0)}%`, inline: true },
-        { name: 'Better luck next time!', value: 'Tip: Use a stronger ball for better odds.', inline: false },
-      )
       .setImage(pokemon.sprite)
-      .setTimestamp();
+      .setFooter({ text: footerText });
   }
 
   return { embeds: [embed], components: [] };

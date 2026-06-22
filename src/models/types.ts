@@ -1,6 +1,10 @@
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'super_rare' | 'legendary';
+export type BoxRarity = Rarity | 'mega' | 'shiny';
 
-export type BallType = 'pokeball' | 'greatball' | 'ultraball' | 'premierball' | 'masterball';
+export type BallType = 'pokeball' | 'greatball' | 'ultraball' | 'premierball' | 'masterball'
+  | 'diveball' | 'beastball' | 'luxuryball' | 'netball' | 'lureball'
+  | 'duskball' | 'moonball' | 'friendball' | 'loveball' | 'fastball'
+  | 'heavyball' | 'quickball';
 
 export interface Pokemon {
   id: number;
@@ -42,6 +46,7 @@ export interface PokedexRow {
   user_id: string;
   pokemon_id: number;
   shiny: number;
+  quantity: number;
   caught_at: string;
 }
 
@@ -54,4 +59,28 @@ export interface CatchResult {
   coinsEarned: number;
   newStreak: number;
   totalCaught: number;
+}
+
+export interface ItemConfig {
+  name: string;
+  emoji: string;
+  unicodeFallback: string;
+  section: string;
+  metadata?: boolean;
+}
+
+export interface ItemRow {
+  id: number;
+  user_id: string;
+  item_name: string;
+  quantity: number;
+  metadata: string;
+}
+
+export interface BoxEntry {
+  dex_id: number;
+  name: string;
+  rarity: BoxRarity;
+  quantity: number;
+  shiny: boolean;
 }
