@@ -12,9 +12,9 @@ const testPokemon: Pokemon = {
 };
 
 describe('RewardService', () => {
-  it('should build spawn embed with correct title', () => {
+  it('should build spawn embed with correct description', () => {
     const { embeds } = buildSpawnEmbed(testPokemon, { pokeball: 10 }, 0, 5);
-    expect(embeds[0].data.title).toContain('Pikachu');
+    expect(embeds[0].data.description).toContain('Pikachu');
   });
 
   it('should disable button when ball count is 0', () => {
@@ -37,7 +37,7 @@ describe('RewardService', () => {
       catchRate: 80, roll: 45, coinsEarned: 150, newStreak: 3, totalCaught: 10,
     };
     const { embeds } = buildResultEmbed(result);
-    expect(embeds[0].data.title).toContain('caught');
+    expect(embeds[0].data.description).toContain('caught');
   });
 
   it('should build failure result embed', () => {
@@ -46,6 +46,6 @@ describe('RewardService', () => {
       catchRate: 100, roll: 95, coinsEarned: 0, newStreak: 0, totalCaught: 10,
     };
     const { embeds } = buildResultEmbed(result);
-    expect(embeds[0].data.title).toContain('fled');
+    expect(embeds[0].data.description).toContain('broke out');
   });
 });

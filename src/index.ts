@@ -2,14 +2,15 @@ import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'di
 import { DISCORD_TOKEN } from './config.js';
 import { getDb } from './database/connection.js';
 import { handleSpawn } from './commands/spawn.js';
+import { handleTextSpawn, handleTextCatch, BALL_ALIASES } from './commands/prefix-handler.js';
 import { ensureEmoji } from './emoji-config.js';
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent],
 });
 
 client.once('ready', async () => {
-  console.log(`✅ Logged in as ${client.user?.tag}`);
+  console.log(`Logged in as ${client.user?.tag}`);
 
   for (const guild of client.guilds.cache.values()) {
     try {
@@ -28,9 +29,9 @@ client.once('ready', async () => {
 
   try {
     await rest.put(Routes.applicationCommands(client.user!.id), { body: commands });
-    console.log('✅ Slash commands registered');
+    console.log('Slash commands registered');
   } catch (err) {
-    console.error('❌ Failed to register commands:', err);
+    console.error('Failed to register commands:', err);
   }
 });
 
@@ -40,10 +41,25 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
+client.on('messageCreate', async (msg) => {
+  if (msg.author.bot) return;
+
+  const prefix = ';';
+  if (!msg.content.startsWith(prefix)) return;
+
+  const [cmd, ...args] = msg.content.slice(prefix.length).trim().split(/\s+/);
+
+  if (cmd === 'p' || cmd === 'pokemon') {
+    await handleTextSpawn(msg, args);
+  } else if (BALL_ALIASES[cmd]) {
+    await handleTextCatch(msg, [cmd]);
+  }
+});
+
 getDb();
-console.log('✅ Database initialized');
+console.log('Database initialized');
 
 client.login(DISCORD_TOKEN).catch((err) => {
-  console.error('❌ Failed to login:', err);
+  console.error('Failed to login:', err);
   process.exit(1);
 });

@@ -1,12 +1,12 @@
-import { CommandInteraction, CacheType, ButtonInteraction } from 'discord.js';
-import { getOrCreateUser, updateCoins, updateStreak, incrementTotalCaught } from '../database/repositories/user.repo.js';
-import { getBalls, removeBall } from '../database/repositories/inventory.repo.js';
-import { addEntry } from '../database/repositories/pokedex.repo.js';
+import { CommandInteraction, CacheType } from 'discord.js';
+import { getOrCreateUser } from '../database/repositories/user.repo.js';
+import { getBalls } from '../database/repositories/inventory.repo.js';
 import { getRandomPokemon } from '../services/spawn.service.js';
-import { calculateCatchRate, rollCatch, calculateCoins } from '../services/catch.service.js';
+import { processCatch } from '../services/catch-processor.js';
 import { buildSpawnEmbed, buildResultEmbed } from '../services/reward.service.js';
+import { setActiveSpawn, removeActiveSpawn } from '../services/spawn-tracker.js';
 import { COOLDOWN_MS, CATCH_TIMEOUT_MS } from '../config.js';
-import type { BallType, Rarity, CatchResult } from '../models/types.js';
+import type { BallType, CatchResult } from '../models/types.js';
 
 const cooldowns = new Map<string, number>();
 
@@ -40,6 +40,7 @@ export async function handleSpawn(interaction: CommandInteraction<CacheType>): P
   const message = await interaction.editReply({ embeds, components });
 
   cooldowns.set(userId, now);
+  setActiveSpawn(interaction.channelId, { pokemon, userBalls, currentStreak, totalCaught: user.total_caught, message, timestamp: now });
 
   try {
     const btnInteraction = await message.awaitMessageComponent({
@@ -50,46 +51,27 @@ export async function handleSpawn(interaction: CommandInteraction<CacheType>): P
       time: CATCH_TIMEOUT_MS,
     });
 
+    removeActiveSpawn(interaction.channelId);
+
     const ballType = btnInteraction.customId.replace('catch_', '') as BallType;
 
-    if (!removeBall(userId, ballType)) {
+    const { result, embeds: resultEmbeds, noBalls } = processCatch(
+      userId, pokemon, ballType, currentStreak, user.total_caught, user.amulet_coins,
+    );
+
+    if (noBalls) {
       await btnInteraction.update({ content: '❌ You ran out of that ball type!', embeds: [], components: [] });
       return;
     }
 
-    const catchRate = calculateCatchRate(pokemon.rarity as Rarity, ballType);
-    const { success, roll } = rollCatch(catchRate);
-
-    if (success) {
-      const coins = calculateCoins(pokemon.rarity as Rarity, currentStreak, user.amulet_coins);
-      updateCoins(userId, coins);
-      updateStreak(userId, pokemon.rarity, true);
-      incrementTotalCaught(userId);
-      addEntry(userId, pokemon.id, false);
-
-      const result: CatchResult = {
-        success: true, pokemon, ballUsed: ballType,
-        catchRate, roll, coinsEarned: coins,
-        newStreak: currentStreak + 1, totalCaught: user.total_caught + 1,
-      };
-      const { embeds: resultEmbeds } = buildResultEmbed(result);
-      await btnInteraction.update({ embeds: resultEmbeds, components: [] });
-    } else {
-      updateStreak(userId, pokemon.rarity, false);
-      const result: CatchResult = {
-        success: false, pokemon, ballUsed: ballType,
-        catchRate, roll, coinsEarned: 0,
-        newStreak: 0, totalCaught: user.total_caught,
-      };
-      const { embeds: resultEmbeds } = buildResultEmbed(result);
-      await btnInteraction.update({ embeds: resultEmbeds, components: [] });
-    }
+    await btnInteraction.update({ embeds: resultEmbeds!, components: [] });
   } catch {
+    removeActiveSpawn(interaction.channelId);
     const timeoutEmbed = buildResultEmbed({
       success: false, pokemon, ballUsed: 'pokeball',
       catchRate: 0, roll: 0, coinsEarned: 0,
       newStreak: currentStreak, totalCaught: user.total_caught,
-    });
+    } as CatchResult);
     await interaction.editReply({ embeds: timeoutEmbed.embeds, components: [] });
   }
 }
