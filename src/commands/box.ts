@@ -1,15 +1,16 @@
-import { CommandInteraction, CacheType, Message, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { CommandInteraction, CacheType, Message, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } from 'discord.js';
 import { getOrCreateUser } from '../database/repositories/user.repo.js';
 import { getBoxPage } from '../database/repositories/pokedex.repo.js';
 import { getEmoji } from '../emoji-config.js';
-import { getPokemonList, getSpriteUrl } from '../services/spawn.service.js';
+import { getPokemonList } from '../services/spawn.service.js';
+import { createPokemonGrid } from '../services/collage.service.js';
 import type { Pokemon, BoxEntry, BoxRarity } from '../models/types.js';
 
 const PER_PAGE = 20;
 
 function getPokemonSprite(dexId: number): string {
   const p = getPokemonList().find(x => x.id === dexId);
-  return p ? p.sprite : getSpriteUrl(dexId);
+  return p ? p.sprite : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${dexId}.gif`;
 }
 
 const RARITY_EMOJI_FALLBACK: Record<string, string> = {
@@ -34,7 +35,6 @@ function fmtBoxEntry(entry: BoxEntry): string {
 }
 
 function formatBoxEmbed(trainerName: string, page: number, totalPages: number, totalPokemon: number, entries: BoxEntry[], sortBy: string): EmbedBuilder {
-  const firstSprite = entries.length > 0 ? getPokemonSprite(entries[0].dex_id) : undefined;
   const left = entries.slice(0, 10);
   const right = entries.slice(10, 20);
 
@@ -55,7 +55,7 @@ function formatBoxEmbed(trainerName: string, page: number, totalPages: number, t
       { name: '\u200b', value: col1, inline: true },
       { name: '\u200b', value: col2, inline: true },
     )
-    .setThumbnail(firstSprite || null)
+    .setImage('attachment://box.png')
     .setFooter({ text: `Box page ${page}/${totalPages} • Total mons: ${totalPokemon.toLocaleString()} • Sorted by: ${sortBy}` });
 
   return embed;
@@ -106,8 +106,10 @@ export async function handleBox(interaction: CommandInteraction<CacheType>): Pro
   const entries = pokedexToBoxEntries(rows);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
+  const buffer = await createPokemonGrid(entries);
+  const attachment = buffer ? new AttachmentBuilder(buffer, { name: 'box.png' }) : undefined;
   const embed = formatBoxEmbed(interaction.user.username, page, totalPages, total, entries, sortBy);
-  await interaction.editReply({ embeds: [embed], components: buildBoxComponents(page, totalPages) });
+  await interaction.editReply({ embeds: [embed], files: attachment ? [attachment] : [], components: buildBoxComponents(page, totalPages) });
 }
 
 export async function handleTextBox(msg: Message, _args: string[]): Promise<void> {
@@ -120,7 +122,9 @@ export async function handleTextBox(msg: Message, _args: string[]): Promise<void
   const entries = pokedexToBoxEntries(rows);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
+  const buffer = await createPokemonGrid(entries);
+  const attachment = buffer ? new AttachmentBuilder(buffer, { name: 'box.png' }) : undefined;
   const embed = formatBoxEmbed(msg.author.username, page, totalPages, total, entries, sortBy);
   if (!msg.channel.isTextBased() || msg.channel.isDMBased()) return;
-  await msg.channel.send({ embeds: [embed], components: buildBoxComponents(page, totalPages) });
+  await msg.channel.send({ embeds: [embed], files: attachment ? [attachment] : [], components: buildBoxComponents(page, totalPages) });
 }
