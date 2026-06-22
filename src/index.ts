@@ -1,7 +1,8 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { DISCORD_TOKEN } from './config.js';
 import { getDb } from './database/connection.js';
 import { handleSpawn } from './commands/spawn.js';
+import { handleSetupEmoji } from './commands/setup-emoji.js';
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -15,6 +16,10 @@ client.once('ready', async () => {
     new SlashCommandBuilder()
       .setName('spawn')
       .setDescription('Spawn a wild Pokémon to catch!'),
+    new SlashCommandBuilder()
+      .setName('setup-emoji')
+      .setDescription('Upload ball emoji icons to this server')
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuildExpressions),
   ];
 
   try {
@@ -26,8 +31,11 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isCommand() && interaction.commandName === 'spawn') {
+  if (!interaction.isCommand()) return;
+  if (interaction.commandName === 'spawn') {
     await handleSpawn(interaction);
+  } else if (interaction.commandName === 'setup-emoji') {
+    await handleSetupEmoji(interaction);
   }
 });
 
